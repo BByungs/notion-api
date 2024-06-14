@@ -1,34 +1,34 @@
 import { useEffect, useState } from 'react';
+import { DatabaseMap } from './api/notion';
 
 export default function Home() {
-  const [list, setList] = useState<{ [key: string]: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [list, setList] = useState<DatabaseMap[]>([]);
 
   useEffect(() => {
     (async () => {
-      const res = await fetch('/api/notion', {
-        cache: 'force-cache',
-      });
-      const data = await res.json();
+      try {
+        const res = await fetch('/api/notion', {
+          // cache: 'force-cache',
+        });
 
-      const getContent = (arr: any[]): string => {
-        const [dic] = arr;
-        return dic.text.content;
-      };
-
-      data.forEach((data: any) => {
-        let obj: { [key: string]: string } = {};
-        Object.entries(data.properties).forEach(
-          ([key, value]: [string, any]) => {
-            const content = getContent(
-              key === 'Name' ? value.title : value.rich_text
-            );
-
-            console.log({ key, content });
-          }
-        );
-      });
+        const data: DatabaseMap[] = await res.json();
+        setList(data);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setIsLoading(false);
+      }
     })();
   }, []);
 
-  return <>{/* {data?.results.map(() => )} */}</>;
+  if (isLoading) return <p>...loading</p>;
+
+  return (
+    <div>
+      {list.map(({ Name, Contents }) => (
+        <p key={Contents}>{`Name: ${Name} , Contents: ${Contents}`}</p>
+      ))}
+    </div>
+  );
 }
